@@ -1055,18 +1055,19 @@ namespace OpenXmlPowerTools.HtmlToWml
                                 return e;
                             }));
 
-                        return new XElement(W.tc,
+                        var tc = new XElement(W.tc,
                             GetCellProperties(element),
                             newElements.Elements());
+
+                        if (tc.Elements().Last().Name == W.tcPr)
+                            tc.Add(EmptyParagraph(element, settings));
+
+                        return tc;
                     }
                     else
                     {
                         XElement p;
-                        p = new XElement(W.p,
-                            GetParagraphProperties(element, null, settings),
-                            new XElement(W.r,
-                                GetRunProperties(element, settings),
-                                new XElement(W.t, "")));
+                        p = EmptyParagraph(element, settings);
                         return new XElement(W.tc,
                             GetCellProperties(element), p);
                     }
@@ -1074,9 +1075,14 @@ namespace OpenXmlPowerTools.HtmlToWml
 
                 if (element.Name == XhtmlNoNamespace.th)
                 {
-                    return new XElement(W.tc,
+                    var tc = new XElement(W.tc,
                         GetCellHeaderProperties(element),
                         element.Nodes().Select(n => Transform(n, settings, wDoc, nextExpected, preserveWhiteSpace)));
+
+                    if (tc.Elements().Last().Name == W.tcPr)
+                        tc.Add(EmptyParagraph(element, settings));
+
+                    return tc;
                 }
 
                 if (element.Name == XhtmlNoNamespace.tr)
@@ -1119,6 +1125,15 @@ namespace OpenXmlPowerTools.HtmlToWml
 
             return null;
 
+        }
+
+        private static XElement EmptyParagraph(XElement element, HtmlToWmlConverterSettings settings)
+        {
+            return new XElement(W.p,
+                GetParagraphProperties(element, null, settings),
+                new XElement(W.r,
+                    GetRunProperties(element, settings),
+                    new XElement(W.t, "")));
         }
 
         private static XElement FontMerge(XElement higherPriorityFont, XElement lowerPriorityFont)
